@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model brands {
+  id         Int       @id @default(autoincrement())
+  name       String    @unique
+  logo_url   String?
+  color      String?
+  sort_order Int?      @default(0)
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+}
+
+model admins {
+  id         Int       @id @default(autoincrement())
+  username   String    @unique
+  password   String
+  name       String
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+}
+
+model audit_logs {
+  id          Int       @id @default(autoincrement())
+  action      String
+  entity_type String
+  entity_id   Int?
+  entity_name String?
+  details     String?
+  user_type   String
+  user_id     Int?
+  user_name   String
+  ip_address  String?
+  created_at  DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@index([created_at(sort: Desc)], map: "idx_audit_created")
+  @@index([user_type, user_id], map: "idx_audit_user")
+}
+
+model fuel_status {
+  id             Int       @id @default(autoincrement())
+  station_id     Int
+  fuel_type      String
+  is_available   Boolean   @default(true)
+  updated_at     DateTime? @default(now()) @db.Timestamptz(6)
+  updated_by     String?
+  remaining_cars Int?
+  stations       stations  @relation(fields: [station_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([station_id, fuel_type])
+}
+
+model fuel_types {
+  id         Int       @id @default(autoincrement())
+  name       String    @unique
+  sort_order Int?      @default(0)
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+}
+
+model provinces {
+  id               Int                @id @default(autoincrement())
+  name             String             @unique
+  station_requests station_requests[]
+  stations         stations[]
+}
+
+model staff {
+  id                     Int                      @id @default(autoincrement())
+  username               String                   @unique
+  password               String
+  station_id             Int?
+  name                   String
+  phone                  String?
+  stations               stations?                @relation(fields: [station_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  staff_station_requests staff_station_requests[]
+  station_requests       station_requests[]
+}
+
+model staff_station_requests {
+  id         Int       @id @default(autoincrement())
+  staff_id   Int
+  staff_name String
+  station_id Int
+  status     String    @default("pending")
+  admin_note String?
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  staff      staff     @relation(fields: [staff_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  stations   stations  @relation(fields: [station_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model station_requests {
+  id                Int       @id @default(autoincrement())
+  name              String
+  brand             String
+  address           String
+  province_id       Int
+  lat               Float
+  lng               Float
+  phone             String?
+  requested_by      Int
+  requested_by_name String
+  status            String    @default("pending")
+  admin_note        String?
+  created_at        DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime? @default(now()) @db.Timestamptz(6)
+  provinces         provinces @relation(fields: [province_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  staff             staff     @relation(fields: [requested_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model stations {
+  id                     Int                      @id @default(autoincrement())
+  name                   String
+  brand                  String
+  address                String
+  province_id            Int
+  lat                    Float
+  lng                    Float
+  phone                  String?
+  created_at             DateTime?                @default(now()) @db.Timestamptz(6)
+  fuel_status            fuel_status[]
+  staff                  staff[]
+  staff_station_requests staff_station_requests[]
+  public_reports         public_reports[]
+  provinces              provinces                @relation(fields: [province_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+// ============ ระบบรายงานจากประชาชน ============
+
+model system_settings {
+  id         Int       @id @default(autoincrement())
+  key        String    @unique
+  value      String
+  updated_at DateTime? @default(now()) @db.Timestamptz(6)
+  updated_by String?
+}
+
+model public_users {
+  id               Int              @id @default(autoincrement())
+  line_user_id     String           @unique
+  display_name     String
+  picture_url      String?
+  reputation_score Float?           @default(50)
+  total_reports    Int?             @default(0)
+  accurate_reports Int?             @default(0)
+  is_banned        Boolean?         @default(false)
+  created_at       DateTime?        @default(now()) @db.Timestamptz(6)
+  public_reports   public_reports[]
+}
+
+model public_reports {
+  id              Int          @id @default(autoincrement())
+  station_id      Int
+  fuel_type       String
+  is_available    Boolean
+  user_id         Int
+  lat             Float?
+  lng             Float?
+  distance_meters Float?
+  photo_url       String?
+  confidence      Float?       @default(60)
+  status          String       @default("active")
+  expires_at      DateTime?    @db.Timestamptz(6)
+  created_at      DateTime?    @default(now()) @db.Timestamptz(6)
+  stations        stations     @relation(fields: [station_id], references: [id], onDelete: Cascade)
+  public_users    public_users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([station_id, status])
+  @@index([user_id])
+  @@index([expires_at])
+}

@@ -1,0 +1,17 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: pump-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: pump
+      POSTGRES_USER: pump_user
+      POSTGRES_PASSWORD: ${DB_PASS:-changeme}
+    ports:
+      - "5435:5432"
+    volumes:
+      - pump_data:/var/lib/postgresql/data
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  pump_data:

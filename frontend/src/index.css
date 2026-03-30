@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Primary */
+  --primary: #0058bc;
+  --primary-container: #0070eb;
+  --on-primary: #ffffff;
+
+  /* Secondary */
+  --secondary: #0060a8;
+
+  /* Tertiary (Warning) */
+  --tertiary: #9e3d00;
+
+  /* Surface Hierarchy */
+  --surface: #f7f9fb;
+  --surface-container-low: #f2f4f6;
+  --surface-container-lowest: #ffffff;
+  --surface-container-high: #eaedf0;
+  --surface-variant: #dde1e9;
+
+  /* Text */
+  --on-surface: #191c1e;
+  --on-surface-variant: #414755;
+  --outline-variant: #c1c6d7;
+
+  /* Status */
+  --fuel-available: #1b8a4a;
+  --fuel-available-bg: #e6f7ed;
+  --fuel-empty: #c62828;
+  --fuel-empty-bg: #fdeaea;
+
+  /* Spacing */
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
+  --spacing-10: 2.5rem;
+  --spacing-12: 3rem;
+
+  /* Radius */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+
+  /* Shadow - Tinted Ambient */
+  --shadow-ambient: 0 4px 40px rgba(0, 26, 65, 0.06);
+  --shadow-soft: 0 2px 20px rgba(0, 26, 65, 0.04);
+
+  /* Transition */
+  --ease-dampened: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', 'Sarabun', sans-serif;
+  background: var(--surface);
+  color: var(--on-surface);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  max-width: 100%;
+  min-height: 100vh;
+}

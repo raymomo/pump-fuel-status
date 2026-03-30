@@ -1,0 +1,94 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: pump-db
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_NAME:-pump}
+      POSTGRES_USER: ${DB_USER:-pump_user}
+      POSTGRES_PASSWORD: ${DB_PASS}
+    volumes:
+      - pump_data:/var/lib/postgresql/data
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: >
+      postgres
+        -c shared_buffers=2GB
+        -c effective_cache_size=6GB
+        -c work_mem=64MB
+        -c max_connections=200
+        -c random_page_cost=1.1
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-pump_user} -d $${POSTGRES_DB:-pump}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: pump-redis
+    restart: always
+    command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru --save ""
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 768M
+    volumes:
+      - redis_data:/data
+
+  backend:
+    build: ./backend
+    container_name: pump-backend
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      PORT: 3002
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-pump}
+      DB_USER: ${DB_USER:-pump_user}
+      DB_PASS: ${DB_PASS}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      LINE_CHANNEL_ID: ${LINE_CHANNEL_ID}
+      LINE_CHANNEL_SECRET: ${LINE_CHANNEL_SECRET}
+      LINE_CALLBACK_URL: ${LINE_CALLBACK_URL:-https://pingnoi.me/api/auth/line/callback}
+      JWT_SECRET: ${JWT_SECRET}
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID}
+      R2_ACCESS_KEY: ${R2_ACCESS_KEY}
+      R2_SECRET_KEY: ${R2_SECRET_KEY}
+      R2_BUCKET: ${R2_BUCKET:-pump}
+      R2_PUBLIC_URL: ${R2_PUBLIC_URL}
+    deploy:
+      resources:
+        limits:
+          cpus: '5'
+          memory: 8G
+
+  frontend:
+    build: ./frontend
+    container_name: pump-frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+volumes:
+  pump_data:
+  redis_data:

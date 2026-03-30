@@ -1,0 +1,4 @@
+node_modules
+pump.db
+*.log
+generated
